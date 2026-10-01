@@ -1,0 +1,1 @@
+-keepclassmembers class com.rohang.lightstrip.MainActivity$Bridge { @android.webkit.JavascriptInterface <methods>; }

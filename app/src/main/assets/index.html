@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Light strip</title>
+<style>
+:root{
+ --bg:#F2F3F1;--surface:#FFFFFF;--ink:#1C1D20;--mute:#696D74;--line:#E3E4E1;--line-strong:#CDCFCB;
+ --accent:#A9741F;--accent-ink:#FFFFFF;--accent-soft:#F4EAD7;--ok:#2B9A67;--bad:#C4473A;--bad-soft:#F8E4E1;
+ --room:#1E2024;--room-ink:#F1F0EC;--room-mute:#A3A6AC;--room-line:#33363B;
+ --r-lg:22px;--r-md:14px;--r-sm:10px;
+ --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+ --bg:#161719;--surface:#1F2124;--ink:#ECEDEA;--mute:#9A9EA5;--line:#2D2F33;--line-strong:#43464B;
+ --accent:#E0A848;--accent-ink:#1A1408;--accent-soft:#3A2F1C;--ok:#4CC28A;--bad:#E8695B;--bad-soft:#3B2220;
+ --room:#0F1012;--room-line:#26282C;
+}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5}
+body{min-height:100vh;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);display:flex;align-items:center;gap:12px;padding:14px 18px 12px}
+.who{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;border-radius:var(--r-sm);padding:2px 0}
+.who b{font-size:17px;font-weight:650;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{color:var(--mute);font-size:13px}
+.pill{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mute);padding:6px 11px;border:1px solid var(--line);border-radius:99px;background:var(--surface);white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--line-strong)}
+.pill.ok i{background:var(--ok)}.pill.bad i{background:var(--bad)}
+main{padding:4px 16px 110px;max-width:720px;margin:0 auto}
+.tab{display:grid;gap:14px}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 6px calc(8px + env(safe-area-inset-bottom,0px))}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 5px;font-size:12px;color:var(--mute);border-radius:var(--r-sm)}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav button[aria-current="page"]{color:var(--ink);font-weight:600}
+.nav button[aria-current="page"] svg{stroke:var(--accent)}
+
+/* ---------- generic ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px}
+.card h2{font-size:16px;font-weight:650;letter-spacing:-.01em;line-height:1.35}
+.sub{color:var(--mute);font-size:13.5px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.head .sub{margin-top:2px}
+.btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;font-weight:600;font-size:14.5px;border:1px solid var(--line-strong);background:var(--surface)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.small{min-height:36px;padding:0 13px;font-size:13.5px;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:default}
+.link{color:var(--accent);font-weight:600;font-size:14px;padding:6px 2px;white-space:nowrap;flex:none}
+.link.danger{color:var(--bad)}
+.field{display:grid;gap:7px}
+.field+.field{margin-top:14px}
+.field label,.lab{font-size:14px;font-weight:550;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.field label output,.lab output{color:var(--mute);font-weight:400;font-variant-numeric:tabular-nums}
+.input{width:100%;min-height:46px;padding:10px 13px;border:1px solid var(--line-strong);border-radius:12px;background:var(--bg);outline:none}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.input{min-height:110px;resize:vertical;line-height:1.45}
+.hint{font-size:12.5px;color:var(--mute)}
+.err{font-size:13px;color:var(--bad)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:38px;padding:0 15px;border-radius:99px;border:1px solid var(--line-strong);font-size:14px;font-weight:500;background:var(--surface)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.seg{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line-strong);border-radius:12px;padding:3px;gap:3px;background:var(--bg)}
+.seg button{min-height:36px;padding:0 14px;border-radius:9px;font-size:14px;font-weight:500;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+/* range */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;--track:var(--line)}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:var(--track)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.18);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:var(--track)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.18)}
+
+/* ---------- hero (the lamp) ---------- */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-lg);background:var(--room);color:var(--room-ink);padding:18px 18px 20px;display:grid;grid-template-columns:1fr 64px;gap:8px;min-height:340px}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 55% at 38% 52%,var(--glow,transparent),transparent 72%);opacity:var(--glowA,0);transition:opacity .35s ease,background .35s ease;pointer-events:none}
+.hero>*{position:relative}
+.lampbox{display:flex;justify-content:center;margin:-18px 0 0}
+.lampbox svg{width:min(220px,62vw);height:auto;overflow:visible}
+.pull{cursor:pointer;outline:none}
+.pull .cordg{transition:transform .18s cubic-bezier(.3,1.6,.5,1)}
+.pull.tug .cordg{transform:translateY(12px)}
+.pull:focus-visible .bead{stroke:var(--accent);stroke-width:2.5}
+.htext{grid-column:1;margin-top:-6px}
+.htext h1{font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.htext p{color:var(--room-mute);font-size:14px;margin-top:3px;min-height:21px}
+.power{display:flex;align-items:center;gap:12px;margin-top:16px}
+.power .hint{color:var(--room-mute)}
+.switch{width:54px;height:32px;border-radius:16px;background:#4A4D53;position:relative;transition:background .2s;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(22px)}
+.power b{font-weight:600}
+
+/* volume-style brightness */
+.vol{grid-column:2;grid-row:1/span 2;display:flex;flex-direction:column;align-items:center;gap:10px}
+.vol output{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.vslider{position:relative;width:52px;flex:1;min-height:220px;border-radius:16px;background:#2C2F34;overflow:hidden;touch-action:none;cursor:ns-resize;border:1px solid var(--room-line)}
+.vslider .vfill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,var(--vcol,#FFD9A8),color-mix(in srgb,var(--vcol,#FFD9A8) 70%,#fff));opacity:.95}
+.vslider .vgrip{position:absolute;left:50%;width:20px;height:3px;border-radius:2px;background:rgba(0,0,0,.35);transform:translate(-50%,-8px)}
+.vslider svg{position:absolute;left:50%;bottom:12px;width:20px;height:20px;transform:translateX(-50%);fill:none;stroke:#1C1D20;stroke-width:1.8;stroke-linecap:round;opacity:.65}
+.vslider:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--r-md);background:var(--bad-soft);color:var(--ink);font-size:14px}
+.banner b{display:block}
+.banner .btn{margin-left:auto;flex:none}
+
+/* modes */
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 4px 10px;border:1px solid var(--line);border-radius:var(--r-md);font-size:13px;font-weight:550;background:var(--bg)}
+.mode i{width:24px;height:24px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.mode[aria-pressed="true"]{border-color:var(--ink);background:var(--surface);box-shadow:inset 0 0 0 1px var(--ink)}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.sw{aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,0,0,.14);position:relative}
+.sw[aria-pressed="true"]::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--ink)}
+.subpanel{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.preview-dot{width:18px;height:18px;border-radius:50%;display:inline-block;vertical-align:-4px;border:1px solid rgba(0,0,0,.15);margin-right:6px}
+
+/* timers */
+.tcount{font-size:40px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:12px 0 4px}
+.bar span{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+.custom{display:flex;gap:10px;margin-top:14px}
+.custom .input{flex:1;min-width:0}
+
+/* note */
+.oled{background:#000;border-radius:12px;padding:12px;display:flex;justify-content:center;border:1px solid var(--line)}
+.oled canvas{width:100%;max-width:384px;aspect-ratio:2/1;display:block;image-rendering:pixelated}
+.pages{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.selects{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select.input{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+
+/* lists */
+.list{display:grid}
+.item{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:2px}
+.item .grow b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .grow small{color:var(--mute);font-size:13px}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.tag.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.tag.off{background:var(--bg);color:var(--mute);border:1px solid var(--line)}
+.icon-btn{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--mute);flex:none}
+.icon-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lampicon{width:40px;height:40px;border-radius:12px;background:var(--room);display:grid;place-items:center;flex:none}
+.lampicon svg{width:24px;height:24px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:14px}
+.kv dt{color:var(--mute)}
+.kv dd{text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pw{position:relative}
+.pw .input{padding-right:70px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--accent);padding:8px}
+.empty{text-align:center;padding:34px 18px}
+.empty h2{font-size:20px;margin:14px 0 6px}
+.empty p{color:var(--mute);max-width:34ch;margin:0 auto 18px}
+.credit{text-align:center;color:var(--mute);font-size:12.5px;padding:6px 0 0}
+
+/* sheet + toast */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:14px}
+.sheet{width:100%;max-width:460px;background:var(--surface);border-radius:var(--r-lg);padding:22px;animation:rise .2s ease-out}
+.sheet h3{font-size:18px;font-weight:650;margin-bottom:6px}
+.sheet p{color:var(--mute);font-size:14.5px}
+.sheet .row{justify-content:flex-end;margin-top:20px}
+@keyframes rise{from{transform:translateY(16px);opacity:0}}
+.toast{position:fixed;left:50%;bottom:90px;z-index:60;transform:translate(-50%,10px);opacity:0;background:var(--ink);color:var(--surface);padding:11px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (min-width:640px){.modes{grid-template-columns:repeat(7,1fr)}.swatches{grid-template-columns:repeat(12,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <button class="who" id="who" aria-label="Choose lamp"><b id="whoName">Light strip</b><small id="whoAddr">No lamp added</small></button>
+ <div class="pill" id="pill" role="status"><i></i><span id="pillT">No lamp</span></div>
+</header>
+
+<main>
+ <!-- ===================== LIGHT ===================== -->
+ <section class="tab" id="tab-light" data-needs-lamp>
+  <div class="banner" id="offline" hidden>
+   <div><b>Can't reach the lamp</b><span id="offlineT">Check that your phone is on the same WiFi as the lamp.</span></div>
+   <button class="btn small" id="retry">Retry</button>
+  </div>
+
+  <section class="hero" id="hero" aria-live="polite">
+   <div class="lampbox">
+    <svg viewBox="0 0 200 232" role="img" aria-label="Lamp preview">
+     <defs>
+      <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+       <stop id="beamStop" offset="0" stop-color="#FFD9A8" stop-opacity=".85"/>
+       <stop id="beamStop2" offset="1" stop-color="#FFD9A8" stop-opacity="0"/>
+      </linearGradient>
+     </defs>
+     <rect x="84" y="0" width="32" height="5" rx="2.5" fill="#3A3D42"/>
+     <line x1="100" y1="5" x2="100" y2="54" stroke="#6C7077" stroke-width="1.25"/>
+     <path id="beamPath" d="M64 108 L14 232 L186 232 L136 108 Z" fill="url(#beam)" opacity="0"/>
+     <circle id="halo" cx="100" cy="112" r="30" fill="#FFD9A8" opacity="0"/>
+     <path d="M56 108 C56 76 75 56 100 56 C125 56 144 76 144 108 Z" fill="#F4F2ED" stroke="#0E0F11" stroke-width="1.5" stroke-linejoin="round"/>
+     <path d="M70 92 C74 78 84 68 97 65" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+     <rect x="94" y="50" width="12" height="8" rx="2" fill="#3A3D42"/>
+     <line x1="52" y1="108" x2="148" y2="108" stroke="#0E0F11" stroke-width="1.5" stroke-linecap="round"/>
+     <path id="bulb" d="M87 108 A13 13 0 0 0 113 108 Z" fill="#55585E" stroke="#0E0F11" stroke-width="1"/>
+     <g class="pull" id="pull" role="button" tabindex="0" aria-label="Pull cord, turns the light on or off">
+      <rect x="122" y="104" width="26" height="70" fill="transparent"/>
+      <g class="cordg">
+       <line x1="135" y1="108" x2="135" y2="150" stroke="#8A8E95" stroke-width="1"/>
+       <circle class="bead" cx="135" cy="155" r="5" fill="#E0A848" stroke="#0E0F11" stroke-width="1.25"/>
+      </g>
+     </g>
+    </svg>
+   </div>
+   <div class="htext">
+    <h1 id="hTitle">&nbsp;</h1>
+    <p id="hSub">&nbsp;</p>
+    <div class="power">
+     <button class="switch" id="power" role="switch" aria-checked="false" aria-label="Power"></button>
+     <b id="pLabel">Off</b><span class="hint">or pull the cord</span>
+    </div>
+   </div>
+   <div class="vol">
+    <output id="briV" class="num">0%</output>
+    <div class="vslider" id="vbri" role="slider" tabindex="0" aria-label="Brightness" aria-valuemin="1" aria-valuemax="100" aria-valuenow="50">
+     <div class="vfill" id="vfill"><span class="vgrip"></span></div>
+     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </div>
+   </div>
+  </section>
+
+  <section class="card">
+   <div class="head"><h2>Light mode</h2></div>
+   <div class="modes" id="modes"></div>
+
+   <div class="subpanel" id="pColour">
+    <div class="lab" style="margin-bottom:12px"><span>Colour</span><output id="colV"></output></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="field" style="margin-top:18px"><label for="hue">Custom hue</label>
+     <input type="range" id="hue" min="0" max="359" style="--track:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></div>
+    <div class="field"><label for="sat">Saturation</label><input type="range" id="sat" min="0" max="100"></div>
+   </div>
+
+   <div class="subpanel" id="pWarm">
+    <div class="field"><label for="warm">Warm white tone<output id="warmV"></output></label>
+     <input type="range" id="warm" min="1800" max="3500" step="50"></div>
+   </div>
+   <div class="subpanel" id="pCold">
+    <div class="field"><label for="cold">Cold white tone<output id="coldV"></output></label>
+     <input type="range" id="cold" min="5000" max="10000" step="100"></div>
+   </div>
+   <div class="subpanel" id="pRainbow">
+    <div class="field"><label for="speed">Rainbow speed<output id="speedV"></output></label>
+     <input type="range" id="speed" min="1" max="100"></div>
+   </div>
+   <div class="subpanel" id="pBlink">
+    <div class="field"><label for="onMs">Time on<output id="onMsV"></output></label>
+     <input type="range" id="onMs" min="50" max="5000" step="50"></div>
+    <div class="field"><label for="offMs">Time off<output id="offMsV"></output></label>
+     <input type="range" id="offMs" min="50" max="5000" step="50"></div>
+   </div>
+   <div class="subpanel" id="pMusic">
+    <p class="sub">The strip reacts to sound picked up by the lamp's microphone. Brightness sets the peak level.</p>
+   </div>
+  </section>
+ </section>
+
+ <!-- ===================== TIMERS ===================== -->
+ <section class="tab" id="tab-timers" data-needs-lamp hidden>
+  <section class="card" data-timer="on">
+   <div class="head"><div><h2>On delay</h2><p class="sub">Turns the light on after a set time.</p></div>
+    <button class="link" data-cancel hidden>Cancel</button></div>
+   <div data-idle>
+    <div class="chips"></div>
+    <div class="custom"><input class="input" type="number" min="1" max="1440" inputmode="numeric" placeholder="Minutes" aria-label="Custom minutes for on delay"><button class="btn primary" data-start>Start</button></div>
+   </div>
+   <div data-run hidden>
+    <div class="tcount" data-count>0:00</div>
+    <div class="bar"><span data-bar></span></div>
+    <p class="sub" data-when></p>
+   </div>
+  </section>
+  <section class="card" data-timer="off">
+   <div class="head"><div><h2>Off delay</h2><p class="sub">Turns the light off after a set time.</p></div>
+    <button class="link" data-cancel hidden>Cancel</button></div>
+   <div data-idle>
+    <div class="chips"></div>
+    <div class="custom"><input class="input" type="number" min="1" max="1440" inputmode="numeric" placeholder="Minutes" aria-label="Custom minutes for off delay"><button class="btn primary" data-start>Start</button></div>
+   </div>
+   <div data-run hidden>
+    <div class="tcount" data-count>0:00</div>
+    <div class="bar"><span data-bar></span></div>
+    <p class="sub" data-when></p>
+   </div>
+  </section>
+  <p class="hint" style="padding:0 6px">Timers run on the lamp, so they keep going after you close the app. Up to 24 hours.</p>
+ </section>
+
+ <!-- ===================== NOTE ===================== -->
+ <section class="tab" id="tab-note" data-needs-lamp hidden>
+  <section class="card">
+   <div class="head"><div><h2>Display note</h2><p class="sub">Shown on the lamp's screen when the knob hasn't been used for a while.</p></div></div>
+   <div class="oled"><canvas id="oled" width="384" height="192" aria-label="Display preview"></canvas></div>
+   <div class="pages"><span class="hint" id="pageInfo">Preview</span><span class="hint num" id="charInfo"></span></div>
+   <div class="field" style="margin-top:16px"><label for="noteText">Message</label>
+    <textarea class="input" id="noteText" maxlength="240" placeholder="Write a note for the display"></textarea>
+    <span class="hint">The display shows plain letters, numbers and punctuation. Long notes flip through pages.</span></div>
+   <div class="selects" style="margin-top:14px">
+    <div class="field"><label for="nfont">Font</label><select class="input" id="nfont"></select></div>
+    <div class="field" style="margin-top:0"><label for="nidle">Show after</label><select class="input" id="nidle"></select></div>
+   </div>
+   <div class="field"><span class="lab">Alignment</span>
+    <div class="seg" id="nalign"><button data-a="0" aria-pressed="true">Left</button><button data-a="1" aria-pressed="false">Centre</button></div></div>
+   <div class="row" style="margin-top:20px">
+    <button class="btn primary grow" id="noteSave">Save note</button>
+    <button class="btn" id="noteClear">Clear</button>
+   </div>
+  </section>
+ </section>
+
+ <!-- ===================== WIFI ===================== -->
+ <section class="tab" id="tab-wifi" data-needs-lamp hidden>
+  <section class="card">
+   <div class="head"><h2>Current network</h2><span class="tag off" id="sigTag">Signal</span></div>
+   <dl class="kv">
+    <dt>Network</dt><dd id="wSsid">–</dd>
+    <dt>IP address</dt><dd id="wIp">–</dd>
+    <dt>Name on network</dt><dd id="wHost">–</dd>
+    <dt>Signal</dt><dd id="wRssi">–</dd>
+   </dl>
+   <div class="row" style="margin-top:16px"><button class="btn small" id="openWeb">Open lamp's web page</button></div>
+  </section>
+
+  <section class="card">
+   <div class="head"><div><h2>Saved networks</h2><p class="sub" id="wCount"></p></div>
+    <button class="link" id="wRefresh">Refresh</button></div>
+   <div class="list" id="wList"><p class="sub">Loading…</p></div>
+  </section>
+
+  <section class="card">
+   <div class="head"><div><h2>Add a network</h2><p class="sub">The lamp joins the strongest saved network when it starts.</p></div></div>
+   <div class="field"><label for="wNewSsid">Network name</label><input class="input" id="wNewSsid" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+   <div class="field"><label for="wNewPass">Password</label>
+    <div class="pw"><input class="input" id="wNewPass" type="password" maxlength="64" autocomplete="off" placeholder="Leave empty for an open network"><button id="wShow" type="button">Show</button></div></div>
+   <p class="err" id="wErr" hidden></p>
+   <button class="btn primary" id="wAdd" style="margin-top:16px;width:100%">Save network</button>
+  </section>
+
+  <section class="card">
+   <div class="head"><div><h2>Forget all WiFi</h2><p class="sub">The lamp restarts in setup mode and broadcasts its own network so you can set it up again.</p></div></div>
+   <button class="btn danger" id="wReset">Forget all and restart</button>
+  </section>
+ </section>
+
+ <!-- ===================== LAMPS (IP addresses) ===================== -->
+ <section class="tab" id="tab-lamps" hidden>
+  <section class="card" id="lampsCard">
+   <div class="head"><div><h2>Your lamps</h2><p class="sub">The app controls the lamp marked as in use.</p></div>
+    <button class="link" id="lRecheck">Check all</button></div>
+   <div class="list" id="lList"></div>
+  </section>
+
+  <section class="card" id="addCard">
+   <div class="head"><div><h2 id="addTitle">Add a lamp</h2><p class="sub" id="addSub">Enter the IP address shown on the lamp's display, or under Menu, WiFi details.</p></div></div>
+   <div class="field"><label for="lAddr">IP address</label>
+    <input class="input num" id="lAddr" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="192.168.1.50">
+    <span class="hint">You can also type a name such as esp32led.local, or add a port like 192.168.1.50:80.</span>
+    <div><button class="link" id="lLocal" type="button">Use esp32led.local</button></div></div>
+   <div class="field"><label for="lName">Name</label><input class="input" id="lName" maxlength="30" placeholder="Bedroom lamp"></div>
+   <p class="err" id="lErr" hidden></p>
+   <div class="row" style="margin-top:16px">
+    <button class="btn primary grow" id="lSave">Connect and save</button>
+    <button class="btn" id="lForce" hidden>Save anyway</button>
+    <button class="btn" id="lCancelEdit" hidden>Cancel</button>
+   </div>
+  </section>
+
+  <section class="card">
+   <div class="head"><h2>About</h2></div>
+   <dl class="kv">
+    <dt>App</dt><dd>Light strip</dd>
+    <dt>Version</dt><dd>0.1</dd>
+    <dt>Lamp firmware</dt><dd id="aFw">–</dd>
+    <dt>Designed by</dt><dd>Ro-Han G.</dd>
+   </dl>
+  </section>
+ </section>
+
+ <!-- empty state for tabs that need a lamp -->
+ <section class="tab" id="tab-empty" hidden>
+  <section class="card empty">
+   <svg viewBox="0 0 200 150" width="140" aria-hidden="true"><line x1="100" y1="0" x2="100" y2="40" stroke="var(--line-strong)" stroke-width="1.5"/><path d="M60 90 C60 60 78 42 100 42 C122 42 140 60 140 90 Z" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/><line x1="56" y1="90" x2="144" y2="90" stroke="var(--ink)" stroke-width="1.5"/><path d="M89 90 A11 11 0 0 0 111 90 Z" fill="var(--line)" stroke="var(--ink)"/></svg>
+   <h2>Add your lamp</h2>
+   <p>Connect your phone to the same WiFi as the lamp, then add the IP address it shows on its display.</p>
+   <button class="btn accent" id="goAdd">Add a lamp</button>
+  </section>
+ </section>
+
+ <p class="credit">Light strip, version 0.1. Designed by Ro-Han G.</p>
+</main>
+
+<nav class="nav" aria-label="Sections">
+ <button data-tab="light" aria-current="page"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Light</button>
+ <button data-tab="timers"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/></svg>Timers</button>
+ <button data-tab="note"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M7 9h10M7 13h6M9 21h6"/></svg>Note</button>
+ <button data-tab="wifi"><svg viewBox="0 0 24 24"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".8" fill="currentColor"/></svg>WiFi</button>
+ <button data-tab="lamps"><svg viewBox="0 0 24 24"><path d="M12 2v4M7 13a5 5 0 0 1 10 0z"/><path d="M10.5 13a1.5 1.5 0 0 0 3 0M5 21h14M12 13v8"/></svg>Lamps</button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="scrim" id="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+ <h3 id="sTitle"></h3><p id="sText"></p>
+ <div class="row"><button class="btn" id="sNo">Cancel</button><button class="btn primary" id="sYes">OK</button></div>
+</div></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const qs=(s,el=document)=>el.querySelector(s), qsa=(s,el=document)=>[...el.querySelectorAll(s)];
+
+/* ================= storage + transport ================= */
+const store={
+ get(k){try{return window.Native?Native.load(k):(localStorage.getItem(k)||'')}catch(e){return ''}},
+ set(k,v){try{window.Native?Native.save(k,v):localStorage.setItem(k,v)}catch(e){}}
+};
+let reqSeq=0;const waiting={};
+window.__native=(id,status,body)=>{const w=waiting[id];if(w){delete waiting[id];w({status,body})}};
+
+function http(method,addr,path,body,timeout){
+ const url='http://'+addr+path;timeout=timeout||4500;
+ if(window.Native){
+  return new Promise(res=>{const id='r'+(++reqSeq);waiting[id]=res;Native.request(id,method,url,body||'',timeout)})
+   .then(r=>{if(r.status===0)throw new Error('offline');return r});
+ }
+ const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),timeout);
+ const o={method,signal:ctl.signal,cache:'no-store'};
+ if(method==='POST'){o.body=body;o.headers={'Content-Type':'application/x-www-form-urlencoded'}}
+ return fetch(url,o).then(async r=>({status:r.status,body:await r.text()})).catch(()=>{throw new Error('offline')}).finally(()=>clearTimeout(t));
+}
+function api(method,path,body,addr,timeout){
+ return http(method,addr||lamp().addr,path,body,timeout).then(r=>{
+  let j=null;try{j=JSON.parse(r.body)}catch(e){}
+  if(r.status>=400){const e=new Error((j&&j.error)||('The lamp replied with error '+r.status));e.http=r.status;throw e}
+  return j;
+ });
+}
+const form=o=>new URLSearchParams(o).toString();
+
+/* ================= lamps (saved IP addresses) ================= */
+let lamps=[],activeId='';
+try{const d=JSON.parse(store.get('lamps')||'{}');lamps=d.list||[];activeId=d.active||''}catch(e){}
+if(!lamps.find(l=>l.id===activeId))activeId=lamps[0]?lamps[0].id:'';
+const lamp=()=>lamps.find(l=>l.id===activeId)||null;
+const saveLamps=()=>store.set('lamps',JSON.stringify({list:lamps,active:activeId}));
+const lampStatus={};   // id -> 'ok' | 'bad' | 'checking'
+
+function normAddr(s){
+ s=(s||'').trim().replace(/^https?:\/\//i,'').replace(/\/.*$/,'');
+ const m=s.match(/^([a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::(\d{1,5}))?$/i);
+ if(!m)return null;
+ const h=m[1];
+ if(/^[\d.]+$/.test(h)){const p=h.split('.');if(p.length!==4||!p.every(n=>n!==''&&+n<=255))return null}
+ if(m[2]&&(+m[2]<1||+m[2]>65535))return null;
+ return s.toLowerCase();
+}
+
+/* ================= state ================= */
+let S=null,online=null,paused=false;
+const MODES=[
+ {k:'color',n:'Colour'},{k:'warm',n:'Warm'},{k:'cold',n:'Cold'},{k:'white',n:'White'},
+ {k:'rainbow',n:'Rainbow'},{k:'blink',n:'Blink'},{k:'music',n:'Music'}];
+const MODE_TITLE={color:'Colour',warm:'Warm white',cold:'Cold white',white:'White',rainbow:'Rainbow',blink:'Blink',music:'Music',off:'Off'};
+const PRESETS=[['Red','FF0000'],['Orange','FF6400'],['Amber','FFA014'],['Yellow','FFDC00'],['Green','00DC3C'],['Teal','00C88C'],
+ ['Cyan','00C8FF'],['Blue','0050FF'],['Indigo','5028FF'],['Purple','AA00FF'],['Pink','FF288C'],['White','FFFFFF']];
+const FONTS=['Classic small','Classic medium','Classic large','Sans','Sans bold','Serif','Mono'];
+const IDLE=[5,10,20,30,60,120,300,600,1800,3600];
+
+/* ================= colour helpers ================= */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hex=(r,g,b)=>'#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+function kelvin(k){const t=k/100;let r,g,b;
+ if(t<=66){r=255;g=99.4708025861*Math.log(t)-161.1195681661;b=t<=19?0:138.5177312231*Math.log(t-10)-305.0447927307}
+ else{r=329.698727446*Math.pow(t-60,-0.1332047592);g=288.1221695283*Math.pow(t-60,-0.0755148492);b=255}
+ return hex(r,g,b)}
+function hsv2rgb(h,s,v){const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return [f(5)*255,f(3)*255,f(1)*255]}
+function rgb2hs(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;
+ if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return [Math.round(h),Math.round(mx?d/mx*100:0)]}
+const curHex=()=>S?hex(S.r,S.g,S.b):'#ffffff';
+function modeColor(m){if(!S)return '#FFD9A8';
+ switch(m){case 'warm':return kelvin(S.warm);case 'cold':return kelvin(S.cold);case 'white':return '#ffffff';
+  case 'rainbow':return 'hsl('+rainbowHue+',100%,60%)';default:return curHex()}}
+const isOn=()=>S&&S.mode!=='off';
+const shownMode=()=>S?(S.mode==='off'?(S.last||'color'):S.mode):'color';
+
+/* ================= UI: shell ================= */
+let tab='light';
+function showTab(t){
+ tab=t;
+ const need=!lamp()&&t!=='lamps';
+ qsa('main>.tab').forEach(s=>s.hidden=true);
+ $(need?'tab-empty':'tab-'+t).hidden=false;
+ qsa('.nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===t?'page':'false'));
+ window.scrollTo(0,0);
+ if(t==='wifi'&&lamp())loadWifi();
+ if(t==='lamps')checkAll();
+ if(t==='note')drawOled();
+}
+qsa('.nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$('who').onclick=()=>showTab('lamps');
+$('goAdd').onclick=()=>{showTab('lamps');setTimeout(()=>$('lAddr').focus(),50)};
+
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800)}
+
+let sheetRes=null;
+function ask(title,text,ok,danger){
+ $('sTitle').textContent=title;$('sText').textContent=text;$('sYes').textContent=ok||'OK';
+ $('sYes').className='btn '+(danger?'danger':'primary');$('scrim').hidden=false;$('sYes').focus();
+ return new Promise(r=>sheetRes=r);
+}
+function closeSheet(v){$('scrim').hidden=true;if(sheetRes){const r=sheetRes;sheetRes=null;r(v)}}
+$('sYes').onclick=()=>closeSheet(true);$('sNo').onclick=()=>closeSheet(false);
+$('scrim').onclick=e=>{if(e.target===$('scrim'))closeSheet(false)};
+
+function setOnline(v){
+ online=v;const p=$('pill'),l=lamp();
+ p.className='pill'+(v===true?' ok':v===false?' bad':'');
+ $('pillT').textContent=!l?'No lamp':v===true?'Online':v===false?'Not responding':'Connecting';
+ $('offline').hidden=v!==false;
+ if(l)$('offlineT').textContent=' Nothing answered at '+l.addr+'. Check that your phone is on the same WiFi as the lamp.';
+}
+function renderWho(){
+ const l=lamp();
+ $('whoName').textContent=l?l.name:'Light strip';
+ $('whoAddr').textContent=l?l.addr:'No lamp added';
+}
+
+/* ================= requests to the lamp ================= */
+let busy=false,pending=null,lastLocal=0;
+function mergeQ(a,b){const p=new URLSearchParams(a);new URLSearchParams(b).forEach((v,k)=>p.set(k,v));return p.toString()}
+function send(q){
+ lastLocal=Date.now();
+ if(busy){pending=pending?mergeQ(pending,q):q;return}
+ busy=true;const id=activeId;
+ api('GET','/api/set?'+q).then(j=>{if(id===activeId&&!pending)applyState(j)}).catch(()=>setOnline(false))
+  .finally(()=>{busy=false;if(pending){const p=pending;pending=null;send(p)}});
+}
+let loading=false;
+function load(){
+ const l=lamp();if(!l||loading)return;loading=true;const id=activeId;
+ api('GET','/api/state',null,null,4000).then(j=>{
+  if(id!==activeId)return;
+  if(busy||pending||Date.now()-lastLocal<1200){setOnline(true);return}   // don't fight the user's finger
+  applyState(j);
+ }).catch(()=>{if(id===activeId)setOnline(false)}).finally(()=>loading=false);
+}
+setInterval(()=>{if(!paused&&!document.hidden)load()},4000);
+window.appPause=()=>{paused=true};
+window.appResume=()=>{paused=false;load()};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+$('retry').onclick=()=>{setOnline(null);load()};
+
+let onEnd=0,offEnd=0;
+function applyState(j){
+ if(!j||typeof j!=='object')return;
+ S=j;setOnline(true);
+ const now=Date.now();
+ onEnd=j.onT>0?now+j.onT*1000:0;offEnd=j.offT>0?now+j.offT*1000:0;
+ const l=lamp();
+ if(l&&j.ver&&l.fw!==j.ver){l.fw=j.ver;saveLamps()}
+ lampStatus[activeId]='ok';
+ renderAll();
+}
+
+/* ================= LIGHT tab ================= */
+const modesEl=$('modes');
+MODES.forEach(m=>{
+ const b=document.createElement('button');b.className='mode';b.dataset.m=m.k;b.setAttribute('aria-pressed','false');
+ b.innerHTML='<i></i><span>'+m.n+'</span>';
+ b.onclick=()=>{if(!S)return;S.mode=m.k;S.last=m.k;renderLight();send('mode='+m.k)};
+ modesEl.appendChild(b);
+});
+PRESETS.forEach(([n,c])=>{
+ const b=document.createElement('button');b.className='sw';b.style.background='#'+c;b.dataset.c=c;
+ b.setAttribute('aria-label',n);b.setAttribute('aria-pressed','false');
+ b.onclick=()=>{if(!S)return;const v=parseInt(c,16);S.r=v>>16&255;S.g=v>>8&255;S.b=v&255;
+  const m=S.mode==='blink'?'blink':'color';S.mode=m;S.last=m;syncHueSat(true);renderLight();send('mode='+m+'&c='+c)};
+ $('swatches').appendChild(b);
+});
+function pickHueSat(){
+ if(!S)return;const [r,g,b]=hsv2rgb(+$('hue').value,+$('sat').value/100,1);
+ S.r=Math.round(r);S.g=Math.round(g);S.b=Math.round(b);
+ const m=S.mode==='blink'?'blink':'color';S.mode=m;S.last=m;renderLight();
+ send('mode='+m+'&c='+curHex().slice(1).toUpperCase());
+}
+$('hue').oninput=pickHueSat;$('sat').oninput=pickHueSat;
+function syncHueSat(force){
+ if(!S)return;if(!force&&(document.activeElement===$('hue')||document.activeElement===$('sat')))return;
+ const [h,s]=rgb2hs(S.r,S.g,S.b);if(s>0)$('hue').value=h;$('sat').value=s;
+}
+function bindRange(id,key,fmt){
+ const el=$(id);
+ el.oninput=()=>{if(!S)return;S[key]=+el.value;renderLight();send(key+'='+el.value)};
+ return ()=>{if(S&&document.activeElement!==el)el.value=S[key];$(id+'V').textContent=fmt(+el.value)};
+}
+const rWarm=bindRange('warm','warm',v=>v+' K'),rCold=bindRange('cold','cold',v=>v+' K'),
+ rSpeed=bindRange('speed','speed',v=>v+'%');
+const msFmt=v=>v>=1000?(v/1000).toFixed(v%1000?2:1).replace(/0$/,'')+' s':v+' ms';
+const rOn=(()=>{const el=$('onMs');el.oninput=()=>{if(!S)return;S.on=+el.value;renderLight();send('on='+el.value)};
+ return ()=>{if(S&&document.activeElement!==el)el.value=S.on;$('onMsV').textContent=msFmt(+el.value)}})();
+const rOff=(()=>{const el=$('offMs');el.oninput=()=>{if(!S)return;S.off=+el.value;renderLight();send('off='+el.value)};
+ return ()=>{if(S&&document.activeElement!==el)el.value=S.off;$('offMsV').textContent=msFmt(+el.value)}})();
+
+function togglePower(){if(!S)return;const on=!isOn();S.mode=on?(S.last||'color'):'off';renderLight();send('power='+(on?1:0))}
+$('power').onclick=togglePower;
+const pull=$('pull');
+function tug(){pull.classList.add('tug');setTimeout(()=>pull.classList.remove('tug'),220);togglePower();if(navigator.vibrate)navigator.vibrate(12)}
+pull.onclick=tug;pull.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tug()}};
+
+/* volume-style brightness */
+const vs=$('vbri');let vDrag=false;
+function setBri(v,push){if(!S)return;v=clamp(Math.round(v),1,255);if(v===S.bri&&!push)return;S.bri=v;renderLight();send('bri='+v)}
+function briFromY(y){const r=vs.getBoundingClientRect();return 1+(1-clamp((y-r.top)/r.height,0,1))*254}
+vs.addEventListener('pointerdown',e=>{vDrag=true;vs.setPointerCapture(e.pointerId);setBri(briFromY(e.clientY))});
+vs.addEventListener('pointermove',e=>{if(vDrag)setBri(briFromY(e.clientY))});
+const vEnd=()=>{vDrag=false};vs.addEventListener('pointerup',vEnd);vs.addEventListener('pointercancel',vEnd);
+vs.addEventListener('wheel',e=>{e.preventDefault();if(S)setBri(S.bri+(e.deltaY<0?8:-8))},{passive:false});
+vs.addEventListener('keydown',e=>{if(!S)return;const st={ArrowUp:13,ArrowRight:13,ArrowDown:-13,ArrowLeft:-13,PageUp:38,PageDown:-38}[e.key];
+ if(st){e.preventDefault();setBri(S.bri+st)}else if(e.key==='Home'){e.preventDefault();setBri(1)}else if(e.key==='End'){e.preventDefault();setBri(255)}});
+
+/* lamp animation (rainbow hue drift + blink) */
+let rainbowHue=0,blinkPhase=true,blinkAt=0,lastFrame=0;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(t){
+ requestAnimationFrame(frame);
+ if(!S||!isOn()||tab!=='light'||document.hidden)return;
+ const dt=t-(lastFrame||t);lastFrame=t;
+ if(S.mode==='rainbow'&&!reduce){rainbowHue=(rainbowHue+dt*0.004*(S.speed||40))%360;drawLamp()}
+ else if(S.mode==='blink'&&!reduce){if(t>=blinkAt){blinkPhase=!blinkPhase;blinkAt=t+(blinkPhase?S.on:S.off);drawLamp()}}
+}
+requestAnimationFrame(frame);
+
+function drawLamp(){
+ const on=isOn(),m=S?S.mode:'off',c=modeColor(m==='off'?shownMode():m),k=S?S.bri/255:0;
+ const lit=on&&!(m==='blink'&&!blinkPhase&&!reduce);
+ $('bulb').setAttribute('fill',lit?c:'#55585E');
+ $('halo').setAttribute('fill',c);$('halo').style.opacity=lit?(0.18+0.35*k):0;
+ $('beamStop').setAttribute('stop-color',c);$('beamStop2').setAttribute('stop-color',c);
+ $('beamPath').style.opacity=lit?(0.25+0.6*k):0;
+ const h=$('hero');h.style.setProperty('--glow',c);h.style.setProperty('--glowA',lit?(0.12+0.42*k).toFixed(2):0);
+ vs.style.setProperty('--vcol',on?c:'#8A8E95');
+}
+function renderLight(){
+ if(!S)return;
+ const on=isOn(),m=shownMode(),pct=Math.max(1,Math.round(S.bri/255*100));
+ $('power').setAttribute('aria-checked',on);$('pLabel').textContent=on?'On':'Off';
+ $('hTitle').textContent=on?MODE_TITLE[S.mode]||S.mode:'Off';
+ let sub='';
+ if(!on)sub='Last used: '+(MODE_TITLE[m]||m).toLowerCase();
+ else if(m==='warm')sub=S.warm+' K';
+ else if(m==='cold')sub=S.cold+' K';
+ else if(m==='color')sub=(PRESETS.find(p=>'#'+p[1].toLowerCase()===curHex())||['Custom colour'])[0]+', '+curHex().toUpperCase();
+ else if(m==='rainbow')sub='Speed '+S.speed+'%';
+ else if(m==='blink')sub=msFmt(S.on)+' on, '+msFmt(S.off)+' off';
+ else if(m==='music')sub='Reacting to sound';
+ else sub='Full white';
+ if(S.offT>0&&on)sub+='. Turns off in '+fmtShort(S.offT);
+ if(S.onT>0&&!on)sub+='. Turns on in '+fmtShort(S.onT);
+ $('hSub').textContent=sub;
+ $('briV').textContent=pct+'%';$('vfill').style.height=(S.bri/255*100)+'%';
+ vs.setAttribute('aria-valuenow',pct);vs.setAttribute('aria-valuetext',pct+' percent');
+ qsa('.mode').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.m===m);
+  const i=b.firstChild;i.style.background=b.dataset.m==='rainbow'?'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)':
+   b.dataset.m==='music'?'radial-gradient(circle,'+curHex()+' 30%,#2a2a2a 32%,#2a2a2a 48%,'+curHex()+' 50%)':modeColor(b.dataset.m)});
+ $('pColour').hidden=!(m==='color'||m==='blink');
+ $('pWarm').hidden=m!=='warm';$('pCold').hidden=m!=='cold';$('pRainbow').hidden=m!=='rainbow';
+ $('pBlink').hidden=m!=='blink';$('pMusic').hidden=m!=='music';
+ const ch=curHex();
+ qsa('.sw').forEach(b=>b.setAttribute('aria-pressed','#'+b.dataset.c.toLowerCase()===ch));
+ $('colV').innerHTML='<span class="preview-dot" style="background:'+ch+'"></span>'+ch.toUpperCase();
+ $('sat').style.setProperty('--track','linear-gradient(90deg,#fff,hsl('+$('hue').value+',100%,50%))');
+ $('warm').style.setProperty('--track','linear-gradient(90deg,'+kelvin(1800)+','+kelvin(3500)+')');
+ $('cold').style.setProperty('--track','linear-gradient(90deg,'+kelvin(5000)+','+kelvin(10000)+')');
+ rWarm();rCold();rSpeed();rOn();rOff();
+ drawLamp();
+}
+
+/* ================= TIMERS tab ================= */
+const fmtShort=s=>{const h=Math.floor(s/3600),m=Math.ceil(s%3600/60);return h?(h+' h'+(m?' '+m+' min':'')):Math.max(1,Math.ceil(s/60))+' min'};
+const fmtClock=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+const clockAt=ms=>new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+function timer(type,min){
+ const id=activeId;lastLocal=Date.now();
+ api('GET','/api/timer?'+form({type,min})).then(j=>{if(id===activeId)applyState(j);
+  toast(min>0?(type==='on'?'On delay set for ':'Off delay set for ')+fmtShort(min*60):(type==='on'?'On delay cancelled':'Off delay cancelled'))})
+  .catch(()=>{setOnline(false);toast("Couldn't reach the lamp")});
+}
+qsa('[data-timer]').forEach(card=>{
+ const type=card.dataset.timer,chips=qs('.chips',card),inp=qs('input',card);
+ [[15,'15 min'],[30,'30 min'],[60,'1 hour'],[120,'2 hours']].forEach(([v,n])=>{
+  const b=document.createElement('button');b.className='chip';b.textContent=n;b.onclick=()=>timer(type,v);chips.appendChild(b)});
+ qs('[data-start]',card).onclick=()=>{const v=parseInt(inp.value,10);
+  if(v>0&&v<=1440){timer(type,v);inp.value=''}else{inp.focus();toast('Enter 1 to 1440 minutes')}};
+ inp.onkeydown=e=>{if(e.key==='Enter')qs('[data-start]',card).click()};
+ qs('[data-cancel]',card).onclick=()=>timer(type,0);
+});
+function renderTimers(){
+ if(!S)return;const now=Date.now();
+ qsa('[data-timer]').forEach(card=>{
+  const on=card.dataset.timer==='on',end=on?onEnd:offEnd,total=on?S.onTotal:S.offTotal;
+  const left=end?Math.max(0,Math.round((end-now)/1000)):0,run=left>0;
+  qs('[data-idle]',card).hidden=run;qs('[data-run]',card).hidden=!run;qs('[data-cancel]',card).hidden=!run;
+  if(run){qs('[data-count]',card).textContent=fmtClock(left);
+   qs('[data-bar]',card).style.width=(total?left/total*100:0)+'%';
+   qs('[data-when]',card).textContent=(on?'Light turns on at ':'Light turns off at ')+clockAt(end);}
+ });
+}
+setInterval(()=>{if(!S)return;
+ const now=Date.now();
+ if((onEnd&&now>onEnd+1500)||(offEnd&&now>offEnd+1500)){onEnd=onEnd&&now>onEnd?0:onEnd;offEnd=offEnd&&now>offEnd?0:offEnd;load()}
+ if(tab==='timers')renderTimers();
+},1000);
+
+/* ================= NOTE tab ================= */
+FONTS.forEach((f,i)=>$('nfont').add(new Option(f,i)));
+const idleName=s=>s<60?s+' seconds':s%60?Math.round(s/60*10)/10+' minutes':s===60?'1 minute':s/60+' minutes';
+function fillIdle(cur){const sel=$('nidle');sel.innerHTML='';
+ const list=IDLE.includes(cur)||!cur?IDLE:[...IDLE,cur].sort((a,b)=>a-b);
+ list.forEach(s=>sel.add(new Option(idleName(s),s)));sel.value=cur||20}
+fillIdle(20);
+let noteDirty=false,nAlign=0,notePage=0;
+const cleanNote=s=>s.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,'-').replace(/[^\x20-\x7E\n]/g,'');
+$('noteText').oninput=()=>{const t=$('noteText'),c=cleanNote(t.value);if(c!==t.value){const p=t.selectionStart;t.value=c;t.selectionStart=t.selectionEnd=Math.max(0,p-1)}
+ noteDirty=true;notePage=0;drawOled()};
+$('nfont').onchange=()=>{noteDirty=true;notePage=0;drawOled()};
+$('nidle').onchange=()=>{noteDirty=true};
+qsa('#nalign button').forEach(b=>b.onclick=()=>{nAlign=+b.dataset.a;noteDirty=true;
+ qsa('#nalign button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawOled()});
+function saveNote(text){
+ const id=activeId;$('noteSave').disabled=true;
+ api('POST','/api/note',form({text,font:$('nfont').value,align:nAlign,idle:$('nidle').value}))
+  .then(j=>{noteDirty=false;if(id===activeId)applyState(j);toast(text?'Note saved. The display shows it now.':'Note cleared')})
+  .catch(()=>{setOnline(false);toast("Couldn't reach the lamp. Note not saved.")})
+  .finally(()=>$('noteSave').disabled=false);
+}
+$('noteSave').onclick=()=>saveNote(cleanNote($('noteText').value).replace(/\s+$/,''));
+$('noteClear').onclick=async()=>{if(await ask('Clear the note?','The display goes back to the home screen when idle.','Clear note'))
+ {$('noteText').value='';saveNote('')}};
+function renderNote(){
+ if(!S||noteDirty)return;
+ if(document.activeElement!==$('noteText'))$('noteText').value=S.note||'';
+ $('nfont').value=S.nfont||0;fillIdle(S.nidle||20);nAlign=S.nalign?1:0;
+ qsa('#nalign button').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.a===nAlign));
+ if(tab==='note')drawOled();
+}
+/* Approximation of the OLED's fonts: [css font, line height, baseline, classic char width] */
+const OF=[['8px monospace',10,7,6],['16px monospace',18,14,12],['24px monospace',26,21,18],
+ ['bold 12px Arial,Helvetica,sans-serif',18,13,0],['bold 12.5px Arial,Helvetica,sans-serif',18,13,0],
+ ['13px Georgia,"Times New Roman",serif',18,13,0],['12px "Courier New",Courier,monospace',16,11,0]];
+const cv=$('oled'),cx=cv.getContext('2d');
+function wrap(text,f){
+ cx.font=f[0];const W=128,mw=s=>f[3]?s.length*f[3]:cx.measureText(s).width,out=[];
+ for(const para of text.split('\n')){let line='';
+  for(let word of para.split(' ')){const cand=line?line+' '+word:word;
+   if(mw(cand)<=W){line=cand;continue}
+   if(line)out.push(line);
+   while(word.length>1&&mw(word)>W){let k=word.length;while(k>1&&mw(word.slice(0,k))>W)k--;out.push(word.slice(0,k));word=word.slice(k)}
+   line=word}
+  out.push(line)}
+ return out.slice(0,16);
+}
+function drawOled(){
+ const text=$('noteText').value,f=OF[+$('nfont').value||0];
+ cx.setTransform(3,0,0,3,0,0);cx.fillStyle='#000';cx.fillRect(0,0,128,64);
+ cx.fillStyle='#DDEBFF';cx.textBaseline='alphabetic';
+ if(!text.trim()){cx.font='8px monospace';cx.fillStyle='#6E7A8C';cx.fillText('No note. The home',4,28);cx.fillText('screen shows instead.',4,40);
+  $('pageInfo').textContent='Preview';$('charInfo').textContent='0 / 240';return}
+ const lines=wrap(text,f),per=Math.max(1,Math.floor(64/f[1])),pages=Math.ceil(lines.length/per);
+ notePage%=pages;cx.font=f[0];
+ lines.slice(notePage*per,notePage*per+per).forEach((l,i)=>{
+  const w=f[3]?l.length*f[3]:cx.measureText(l).width,x0=nAlign?Math.max(0,(128-w)/2):0,y=i*f[1]+f[2];
+  if(f[3])[...l].forEach((ch,k)=>cx.fillText(ch,x0+k*f[3],y));   // classic font: fixed 6 px cells
+  else cx.fillText(l,x0,y)});
+ $('pageInfo').textContent=pages>1?'Page '+(notePage+1)+' of '+pages+', flips on the display':'Preview';
+ $('charInfo').textContent=text.length+' / 240';
+}
+setInterval(()=>{if(tab==='note'){notePage++;drawOled()}},2600);
+
+/* ================= WIFI tab ================= */
+function sigWord(r){return r>-55?'Excellent':r>-67?'Good':r>-78?'Fair':'Weak'}
+function renderWifiInfo(){
+ if(!S)return;
+ $('wSsid').textContent=S.ssid||'–';$('wIp').textContent=S.ip||'–';
+ $('wHost').textContent=S.host?S.host+'.local':'–';
+ $('wRssi').textContent=S.rssi?S.rssi+' dBm':'–';
+ const t=$('sigTag');t.textContent=S.rssi?sigWord(S.rssi):'Signal';t.className='tag '+(S.rssi>-67?'ok':S.rssi?'':'off');
+ $('aFw').textContent=S.ver||'–';
+}
+function loadWifi(){
+ const id=activeId;
+ api('GET','/api/wifi').then(j=>{if(id===activeId)renderWifiList(j)})
+  .catch(()=>{$('wList').innerHTML='<p class="sub">Couldn\'t load saved networks.</p>'});
+}
+$('wRefresh').onclick=loadWifi;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderWifiList(j){
+ const list=(j&&j.list)||[],max=(j&&j.max)||5,el=$('wList');
+ $('wCount').textContent=list.length+' of '+max+' saved';
+ if(!list.length){el.innerHTML='<p class="sub">No networks saved yet. Add one below.</p>';return}
+ el.innerHTML='';
+ list.forEach(n=>{
+  const r=document.createElement('div');r.className='item';
+  r.innerHTML='<div class="grow"><b>'+esc(n.ssid)+'</b><small>'+(n.connected?'Connected now':'Saved')+'</small></div>'+
+   (n.connected?'<span class="tag ok">Connected</span>':'<button class="btn small" data-a="c">Connect</button>')+
+   '<button class="icon-btn" data-a="f" aria-label="Forget '+esc(n.ssid)+'"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>';
+  const c=qs('[data-a=c]',r);
+  if(c)c.onclick=async()=>{
+   if(!await ask('Switch to '+n.ssid+'?','The lamp restarts to join this network. If your phone is on a different network, or the lamp gets a new IP address, update it in Lamps.','Connect'))return;
+   api('POST','/api/wifi/connect',form({ssid:n.ssid})).then(()=>{toast('The lamp is restarting to join '+n.ssid);setOnline(null)})
+    .catch(e=>toast(e.http?e.message:"Couldn't reach the lamp"))};
+  qs('[data-a=f]',r).onclick=async()=>{
+   if(!await ask('Forget '+n.ssid+'?',n.connected?'The lamp stays connected until it restarts, then joins another saved network.':'The lamp won\'t join this network any more.','Forget',true))return;
+   api('POST','/api/wifi/forget',form({ssid:n.ssid})).then(j=>{renderWifiList(j);toast('Forgot '+n.ssid)})
+    .catch(()=>toast("Couldn't reach the lamp"))};
+  el.appendChild(r);
+ });
+}
+$('wShow').onclick=()=>{const p=$('wNewPass'),s=p.type==='password';p.type=s?'text':'password';$('wShow').textContent=s?'Hide':'Show'};
+$('wAdd').onclick=()=>{
+ const ssid=$('wNewSsid').value.trim(),pass=$('wNewPass').value,e=$('wErr');e.hidden=true;
+ if(!ssid){e.textContent='Enter the network name.';e.hidden=false;$('wNewSsid').focus();return}
+ if(pass&&pass.length<8){e.textContent='WiFi passwords are at least 8 characters.';e.hidden=false;return}
+ $('wAdd').disabled=true;
+ api('POST','/api/wifi/add',form({ssid,pass})).then(j=>{renderWifiList(j);$('wNewSsid').value='';$('wNewPass').value='';toast('Saved '+ssid)})
+  .catch(x=>{e.textContent=x.http?x.message:"Couldn't reach the lamp. Network not saved.";e.hidden=false})
+  .finally(()=>$('wAdd').disabled=false);
+};
+$('openWeb').onclick=()=>{const l=lamp();if(!l)return;const u='http://'+l.addr+'/';window.Native?Native.openUrl(u):window.open(u,'_blank')};
+$('wReset').onclick=async()=>{
+ if(!await ask('Forget all WiFi networks?','The lamp restarts in setup mode and this app stops reaching it until you set up WiFi again from its setup network.','Forget all',true))return;
+ http('GET',lamp().addr,'/api/wifireset').then(()=>{toast('The lamp is restarting in setup mode');setOnline(false)}).catch(()=>toast("Couldn't reach the lamp"));
+};
+
+/* ================= LAMPS tab (IP addresses) ================= */
+let editing=null,forceAddr=null;
+function renderLamps(){
+ const el=$('lList');$('lampsCard').hidden=!lamps.length;el.innerHTML='';
+ lamps.forEach(l=>{
+  const st=lampStatus[l.id],act=l.id===activeId;
+  const r=document.createElement('div');r.className='item';
+  r.innerHTML='<div class="lampicon"><svg viewBox="0 0 24 24"><path d="M12 2v5" stroke="#888" stroke-width="1.4"/><path d="M5 15a7 7 0 0 1 14 0z" fill="#F4F2ED"/><path d="M9.5 15a2.5 2.5 0 0 0 5 0z" fill="'+(st==='ok'?'#FFC36B':'#666')+'"/></svg></div>'+
+   '<div class="grow"><b>'+esc(l.name)+'</b><small class="num">'+esc(l.addr)+(st==='ok'?', online':st==='bad'?', not responding':st==='checking'?', checking…':'')+'</small></div>'+
+   (act?'<span class="tag">In use</span>':'<button class="btn small" data-a="use">Use</button>')+
+   '<button class="icon-btn" data-a="edit" aria-label="Edit '+esc(l.name)+'"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+   '<button class="icon-btn" data-a="del" aria-label="Remove '+esc(l.name)+'"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>';
+  const u=qs('[data-a=use]',r);if(u)u.onclick=()=>useLamp(l.id,true);
+  qs('[data-a=edit]',r).onclick=()=>startEdit(l);
+  qs('[data-a=del]',r).onclick=async()=>{
+   if(!await ask('Remove '+l.name+'?','This only removes it from the app. The lamp keeps working.','Remove',true))return;
+   lamps=lamps.filter(x=>x.id!==l.id);if(activeId===l.id){activeId=lamps[0]?lamps[0].id:'';S=null}
+   saveLamps();if(editing&&editing.id===l.id)resetForm();renderShell();if(lamp())load()};
+  el.appendChild(r);
+ });
+}
+function useLamp(id,go){activeId=id;S=null;saveLamps();setOnline(null);renderShell();load();if(go){showTab('light');toast('Now controlling '+lamp().name)}}
+function checkAll(){
+ lamps.forEach(l=>{lampStatus[l.id]='checking';
+  api('GET','/api/state',null,l.addr,3000).then(()=>lampStatus[l.id]='ok').catch(()=>lampStatus[l.id]='bad').finally(renderLamps)});
+ renderLamps();
+}
+$('lRecheck').onclick=checkAll;
+$('lLocal').onclick=()=>{$('lAddr').value='esp32led.local';$('lErr').hidden=true};
+function startEdit(l){editing=l;$('lAddr').value=l.addr;$('lName').value=l.name;$('addTitle').textContent='Edit '+l.name;
+ $('addSub').textContent='Change the IP address if the lamp moved to a new one.';$('lSave').textContent='Connect and save';
+ $('lCancelEdit').hidden=false;$('lErr').hidden=true;$('lForce').hidden=true;$('addCard').scrollIntoView({behavior:'smooth'});$('lAddr').focus()}
+function resetForm(){editing=null;forceAddr=null;$('lAddr').value='';$('lName').value='';$('addTitle').textContent=lamps.length?'Add another lamp':'Add a lamp';
+ $('addSub').textContent="Enter the IP address shown on the lamp's display, or under Menu, WiFi details.";$('lCancelEdit').hidden=true;$('lForce').hidden=true;$('lErr').hidden=true}
+$('lCancelEdit').onclick=resetForm;
+function commitLamp(addr,state){
+ let name=$('lName').value.trim();
+ if(editing){const l=lamps.find(x=>x.id===editing.id);l.addr=addr;l.name=name||l.name;if(state&&state.ver)l.fw=state.ver;lampStatus[l.id]=state?'ok':'bad';
+  saveLamps();toast('Saved '+l.name);const was=l.id;resetForm();if(was===activeId){S=null;load()}renderShell();return}
+ const dup=lamps.find(x=>x.addr===addr);if(dup){useLamp(dup.id,true);resetForm();return}
+ const l={id:'l'+Date.now().toString(36),name:name||('Lamp '+(lamps.length+1)),addr,fw:state&&state.ver||''};
+ lamps.push(l);lampStatus[l.id]=state?'ok':'bad';resetForm();
+ useLamp(l.id,false);if(state)applyState(state);
+ showTab('light');toast(state?'Connected to '+l.name:'Saved '+l.name+'. It will connect when the lamp is reachable.');
+}
+$('lSave').onclick=()=>{
+ const e=$('lErr'),addr=normAddr($('lAddr').value);e.hidden=true;$('lForce').hidden=true;
+ if(!addr){e.textContent='Enter an IP address like 192.168.1.50.';e.hidden=false;$('lAddr').focus();return}
+ const b=$('lSave');b.disabled=true;b.textContent='Connecting…';
+ api('GET','/api/state',null,addr,5000).then(j=>{
+  if(!j||j.mode===undefined)throw new Error('notlamp');commitLamp(addr,j);
+ }).catch(x=>{
+  e.textContent=x.message==='notlamp'?'Something answered at '+addr+", but it isn't a Light strip lamp.":
+   'No lamp answered at '+addr+'. Check the address and that your phone is on the same WiFi as the lamp.';
+  e.hidden=false;forceAddr=addr;$('lForce').hidden=false;
+ }).finally(()=>{b.disabled=false;b.textContent='Connect and save'});
+};
+$('lForce').onclick=()=>{if(forceAddr)commitLamp(forceAddr,null)};
+$('lAddr').onkeydown=e=>{if(e.key==='Enter')$('lName').focus()};
+$('lName').onkeydown=e=>{if(e.key==='Enter')$('lSave').click()};
+
+/* ================= render ================= */
+function renderShell(){
+ renderWho();renderLamps();
+ if(!lamp()){setOnline(null);if(tab!=='lamps')showTab(tab)}
+ else if(!$('tab-empty').hidden)showTab(tab);
+ if(!lamps.length)$('addTitle').textContent='Add a lamp';
+}
+function renderAll(){renderLight();renderTimers();renderNote();renderWifiInfo();syncHueSat(false);renderLamps()}
+
+/* Android back button: close dialog, then return to the Light tab, then leave the app */
+window.appBack=()=>{
+ if(!$('scrim').hidden){closeSheet(false);return true}
+ if(editing){resetForm();return true}
+ if(tab!=='light'&&lamp()){showTab('light');return true}
+ return false;
+};
+
+/* ================= start ================= */
+resetForm();renderShell();
+if(lamp()){setOnline(null);showTab('light');load()}else showTab('lamps');
+</script>
+</body>
+</html>

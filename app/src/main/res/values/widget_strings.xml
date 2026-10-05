@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="w_label_lamp">Lamp controls</string>
+    <string name="w_label_toggle">Lamp switch</string>
+    <string name="w_desc_lamp">Power, brightness, modes and a sleep timer</string>
+    <string name="w_desc_toggle">One tap to turn your lamp on or off</string>
+    <string name="w_preview_name">Light strip</string>
+    <string name="w_preview_status">Warm white</string>
+    <string name="w_warm">Warm</string>
+    <string name="w_cold">Cold</string>
+    <string name="w_colour">Colour</string>
+    <string name="w_rainbow">Rainbow</string>
+    <string name="w_sleep">Sleep</string>
+    <string name="w_power">Power</string>
+    <string name="w_dimmer">Dimmer</string>
+    <string name="w_brighter">Brighter</string>
+    <string name="w_open_app">Open Light strip</string>
+</resources>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="@drawable/widget_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/w_glow"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="2dp"
+            android:background="@drawable/widget_glow_ring"
+            android:src="@drawable/widget_glow"
+            android:contentDescription="@string/w_open_app" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/w_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/w_preview_name"
+                android:textColor="@color/w_ink"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/w_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/w_preview_status"
+                android:textColor="@color/w_mute"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/w_status_bad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:textColor="@color/w_bad"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/w_bri_down"
+            style="@style/WidgetStepButton"
+            android:text="−"
+            android:contentDescription="@string/w_dimmer" />
+
+        <TextView
+            android:id="@+id/w_bri"
+            android:layout_width="42dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="70%"
+            android:textColor="@color/w_ink"
+            android:textSize="13sp"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/w_bri_up"
+            style="@style/WidgetStepButton"
+            android:text="+"
+            android:contentDescription="@string/w_brighter" />
+
+        <ImageView
+            android:id="@+id/w_power"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:padding="11dp"
+            android:background="@drawable/widget_power_on"
+            android:src="@drawable/ic_w_power_on"
+            android:contentDescription="@string/w_power" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView android:id="@+id/w_m_warm" style="@style/WidgetChip"
+            android:background="@drawable/widget_chip_on" android:text="@string/w_warm" />
+        <TextView android:id="@+id/w_m_cold" style="@style/WidgetChip" android:text="@string/w_cold" />
+        <TextView android:id="@+id/w_m_color" style="@style/WidgetChip" android:text="@string/w_colour" />
+        <TextView android:id="@+id/w_m_rainbow" style="@style/WidgetChip" android:text="@string/w_rainbow" />
+        <TextView android:id="@+id/w_sleep" style="@style/WidgetChip"
+            android:layout_marginEnd="0dp" android:text="@string/w_sleep" />
+    </LinearLayout>
+</LinearLayout>

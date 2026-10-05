@@ -69,7 +69,11 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onPause() { super.onPause(); js("window.appPause&&appPause()"); }
+    protected void onPause() {
+        super.onPause();
+        js("window.appPause&&appPause()");
+        LampWidgets.refreshAll(this, null, 800);   // widgets pick up what was just changed in the app
+    }
 
     @Override
     protected void onResume() { super.onResume(); js("window.appResume&&appResume()"); }
@@ -138,6 +142,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void save(String key, String value) {
             prefs().edit().putString(key, value).apply();
+            if ("lamps".equals(key)) LampWidgets.renderAll(MainActivity.this);   // renames / new IPs show on widgets
         }
 
         @JavascriptInterface

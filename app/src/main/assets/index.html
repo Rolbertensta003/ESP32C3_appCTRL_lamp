@@ -324,6 +324,27 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
     <button class="btn" id="noteClear">Clear</button>
    </div>
   </section>
+  <section class="card">
+   <div class="head"><div><h2>Display picture</h2><p class="sub">Show a photo or an emoji on the lamp's screen instead of the note. It is cropped and turned into 128 × 64 black and white pixels.</p></div></div>
+   <div class="seg" id="imgSrc"><button data-s="photo" aria-pressed="true">Photo</button><button data-s="emoji" aria-pressed="false">Emoji</button></div>
+   <div class="field" id="photoPick"><button class="btn" id="imgChoose">Choose photo</button>
+    <input type="file" id="imgFile" accept="image/*" hidden>
+    <span class="hint">Drag the photo to move it, pinch or use Zoom to crop.</span></div>
+   <div class="field" id="emojiPick" hidden><label for="emojiText">Emoji</label>
+    <input class="input" id="emojiText" maxlength="8" placeholder="😊" style="font-size:24px">
+    <label for="emojiCap" style="margin-top:10px">Caption (optional)</label>
+    <input class="input" id="emojiCap" maxlength="21" placeholder="Good night"></div>
+   <div class="oled" style="margin-top:14px"><canvas id="imgOled" width="384" height="192" aria-label="Picture preview" style="touch-action:none;cursor:grab"></canvas></div>
+   <div class="field" id="zoomField"><label for="imgZoom">Zoom</label><input type="range" id="imgZoom" min="100" max="400" value="100"></div>
+   <div class="field"><label for="imgThr">Brightness cut-off</label><input type="range" id="imgThr" min="20" max="235" value="128"></div>
+   <div class="field"><span class="lab">Style</span>
+    <div class="seg" id="imgDither"><button data-d="1" aria-pressed="true">Dithered</button><button data-d="0" aria-pressed="false">Solid</button></div>
+    <div class="seg" id="imgInv" style="margin-left:8px"><button data-i="0" aria-pressed="true">Normal</button><button data-i="1" aria-pressed="false">Invert</button></div></div>
+   <div class="row" style="margin-top:20px">
+    <button class="btn primary grow" id="imgSend" disabled>Show on display</button>
+    <button class="btn" id="imgClear">Remove</button>
+   </div>
+  </section>
  </section>
 
  <!-- ===================== WIFI ===================== -->
@@ -511,7 +532,7 @@ function showTab(t){
  window.scrollTo(0,0);
  if(t==='wifi'&&lamp())loadWifi();
  if(t==='lamps')checkAll();
- if(t==='note')drawOled();
+ if(t==='note'){drawOled();drawImg()}
 }
 qsa('.nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 $('who').onclick=()=>showTab('lamps');
@@ -793,6 +814,86 @@ function drawOled(){
  $('charInfo').textContent=text.length+' / 240';
 }
 setInterval(()=>{if(tab==='note'){notePage++;drawOled()}},2600);
+
+/* ================= Display picture (photo / emoji -> 128x64 1-bit) ================= */
+const iv=$('imgOled'),ix=iv.getContext('2d');
+const work=document.createElement('canvas');work.width=128;work.height=64;
+const wx=work.getContext('2d',{willReadFrequently:true});
+let imgSrc='photo',photo=null,pz=1,pox=null,poy=null,dither=1,invert=0,bits=null;
+function segPick(id,attr,cb){qsa('#'+id+' button').forEach(b=>b.onclick=()=>{
+ qsa('#'+id+' button').forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset[attr])})}
+segPick('imgSrc','s',v=>{imgSrc=v;$('photoPick').hidden=v!=='photo';$('zoomField').hidden=v!=='photo';
+ $('emojiPick').hidden=v!=='emoji';drawImg()});
+segPick('imgDither','d',v=>{dither=+v;drawImg()});
+segPick('imgInv','i',v=>{invert=+v;drawImg()});
+$('imgThr').oninput=drawImg;
+$('emojiText').oninput=$('emojiCap').oninput=drawImg;
+$('imgChoose').onclick=()=>$('imgFile').click();
+$('imgFile').onchange=e=>{const f=e.target.files[0];if(!f)return;
+ const url=URL.createObjectURL(f),im=new Image();
+ im.onload=()=>{photo=im;pz=1;pox=poy=null;$('imgZoom').value=100;drawImg()};
+ im.onerror=()=>toast("That file couldn't be opened as a picture.");
+ im.src=url;e.target.value=''};
+$('imgZoom').oninput=()=>{pz=$('imgZoom').value/100;drawImg()};
+/* drag to move, pinch to zoom */
+const pts=new Map();let pinch0=0,z0=1;
+iv.onpointerdown=e=>{if(imgSrc!=='photo'||!photo)return;iv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pts.size===2){const [a,b]=[...pts.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);z0=pz}};
+iv.onpointermove=e=>{const p=pts.get(e.pointerId);if(!p)return;
+ const k=128/iv.getBoundingClientRect().width;
+ if(pts.size===1){pox+=(e.clientX-p.x)*k;poy+=(e.clientY-p.y)*k}
+ p.x=e.clientX;p.y=e.clientY;
+ if(pts.size===2&&pinch0){const [a,b]=[...pts.values()];pz=Math.max(1,Math.min(4,z0*Math.hypot(a.x-b.x,a.y-b.y)/pinch0));$('imgZoom').value=Math.round(pz*100)}
+ drawImg()};
+iv.onpointerup=iv.onpointercancel=e=>{pts.delete(e.pointerId);pinch0=0};
+function renderSource(){
+ wx.setTransform(1,0,0,1,0,0);wx.fillStyle='#000';wx.fillRect(0,0,128,64);
+ if(imgSrc==='photo'){
+  if(!photo)return false;
+  const s=Math.max(128/photo.width,64/photo.height)*pz,w=photo.width*s,h=photo.height*s;
+  pox=Math.min(0,Math.max(128-w,pox==null?(128-w)/2:pox));poy=Math.min(0,Math.max(64-h,poy==null?(64-h)/2:poy));
+  wx.imageSmoothingQuality='high';wx.drawImage(photo,pox,poy,w,h);return true;
+ }
+ const em=$('emojiText').value.trim(),cap=$('emojiCap').value.trim();
+ if(!em&&!cap)return false;
+ wx.textAlign='center';wx.textBaseline='middle';wx.fillStyle='#fff';
+ if(em){const sz=cap?44:56;wx.font=sz+'px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';wx.fillText(em,64,cap?24:33)}
+ if(cap){wx.font='bold 10px Arial,Helvetica,sans-serif';wx.fillText(cap,64,em?57:32)}
+ return true;
+}
+/* Grey -> 1 bit. Floyd–Steinberg when dithered, a plain cut-off otherwise. */
+function toBits(){
+ const d=wx.getImageData(0,0,128,64).data,g=new Float32Array(128*64),thr=+$('imgThr').value,out=new Uint8Array(128*64);
+ for(let i=0;i<g.length;i++){const a=d[i*4+3]/255;g[i]=(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2])*a}
+ for(let y=0;y<64;y++)for(let x=0;x<128;x++){const i=y*128+x,o=g[i]>=thr?255:0,err=g[i]-o;out[i]=o?1:0;
+  if(!dither)continue;
+  if(x<127)g[i+1]+=err*7/16;
+  if(y<63){if(x>0)g[i+127]+=err*3/16;g[i+128]+=err*5/16;if(x<127)g[i+129]+=err/16}}
+ if(invert)for(let i=0;i<out.length;i++)out[i]^=1;
+ return out;
+}
+function drawImg(){
+ ix.setTransform(3,0,0,3,0,0);ix.fillStyle='#000';ix.fillRect(0,0,128,64);
+ if(!renderSource()){bits=null;$('imgSend').disabled=true;
+  ix.font='8px monospace';ix.fillStyle='#6E7A8C';ix.textBaseline='alphabetic';ix.textAlign='left';
+  ix.fillText(imgSrc==='photo'?'Choose a photo to crop.':'Type an emoji above.',4,34);return}
+ bits=toBits();$('imgSend').disabled=false;ix.fillStyle='#DDEBFF';
+ for(let y=0;y<64;y++)for(let x=0;x<128;x++)if(bits[y*128+x])ix.fillRect(x,y,1,1);
+}
+/* 1024 bytes, row by row, leftmost pixel in the high bit (Adafruit drawBitmap / SSD1306 format), sent as hex. */
+function bitsHex(){let h='';
+ for(let i=0;i<1024;i++){let b=0;for(let k=0;k<8;k++)b=(b<<1)|bits[i*8+k];h+=(b<16?'0':'')+b.toString(16)}
+ return h}
+function sendImg(hex,msg){
+ const id=activeId;$('imgSend').disabled=$('imgClear').disabled=true;
+ api('POST','/api/image',form(hex?{bmp:hex,idle:$('nidle').value}:{clear:1}),null,8000)
+  .then(j=>{if(id===activeId&&j&&j.mode)applyState(j);toast(msg)})
+  .catch(e=>{if(e.http===404)toast("This lamp's firmware doesn't support pictures yet.");
+   else{setOnline(false);toast("Couldn't reach the lamp. Picture not sent.")}})
+  .finally(()=>{$('imgSend').disabled=!bits;$('imgClear').disabled=false});
+}
+$('imgSend').onclick=()=>{if(bits)sendImg(bitsHex(),'Picture sent. The display shows it now.')};
+$('imgClear').onclick=async()=>{if(await ask('Remove the picture?','The display goes back to the note or home screen.','Remove'))sendImg('','Picture removed')};
 
 /* ================= WIFI tab ================= */
 function sigWord(r){return r>-55?'Excellent':r>-67?'Good':r>-78?'Fair':'Weak'}

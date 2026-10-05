@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -37,6 +38,8 @@ public class MainActivity extends Activity {
     private WebView web;
     private final ExecutorService pool = Executors.newFixedThreadPool(4);
     private final Handler main = new Handler(Looper.getMainLooper());
+    private static final int PICK_FILE = 7;
+    private ValueCallback<Uri[]> fileCb;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
@@ -54,12 +57,33 @@ public class MainActivity extends Activity {
         s.setTextZoom(100);   // keep layout stable when system font size is large
 
         web.setWebViewClient(new WebViewClient());
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient() {
+            /** Lets <input type="file"> in the page open the system picker (used by Display picture). */
+            @Override
+            public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
+                if (fileCb != null) fileCb.onReceiveValue(null);
+                fileCb = cb;
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*");
+                try { startActivityForResult(Intent.createChooser(i, "Choose a picture"), PICK_FILE); }
+                catch (Exception e) { fileCb = null; cb.onReceiveValue(null); return false; }
+                return true;
+            }
+        });
         web.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
         web.addJavascriptInterface(new Bridge(), "Native");
 
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl("file:///android_asset/index.html");
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != PICK_FILE || fileCb == null) return;
+        Uri u = res == RESULT_OK && data != null ? data.getData() : null;
+        fileCb.onReceiveValue(u == null ? null : new Uri[]{u});
+        fileCb = null;
     }
 
     @Override

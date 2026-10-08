@@ -53,6 +53,7 @@
 
   PIN MAPPING
    LED strip DIN  -> GPIO3   (330 ohm resistor recommended)
+   LED strip DIN  -> GPIO10   (330 ohm resistor recommended)
    I2S mic WS     -> GPIO4
    I2S mic SCK    -> GPIO5
    I2S mic SD     -> GPIO6   (mic L/R pin to GND = left channel)
@@ -107,7 +108,8 @@ const uint32_t CPU_MHZ       = 160;   // 80 saves battery (WiFi needs at least 8
 const uint32_t IDLE_YIELD_MS = 1;     // No-WiFi mode: give the CPU back this long per loop
 
 // ---------- Pins ----------
-#define LED_DATA_PIN  3
+#define LED_DATA_PIN  3     // main led strip 
+#define LED2_DATA_PIN 10   // secondary strip, mirrors the main one
 #define NUM_LEDS      30        // number of LEDs on your strip
 #define I2S_WS_PIN    4
 #define I2S_SCK_PIN   5
@@ -313,7 +315,23 @@ const char PAGE_ETAG[] = "\"" FW_VERSION "-" __DATE__ "-" __TIME__ "\"";
 // =====================================================================
 //                              Objects
 // =====================================================================
-Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
+//Adafruit_NeoPixel strip(NUM_LEDS, LED_DATA_PIN, NEO_GRB + NEO_KHZ800); 
+//
+struct DualStrip : Adafruit_NeoPixel {
+  Adafruit_NeoPixel mirror;
+  bool mirrorBegun = false;
+  DualStrip(uint16_t n, int16_t p, neoPixelType t)
+    : Adafruit_NeoPixel(n, p, t), mirror(n, LED2_DATA_PIN, t) {}
+  void show() {
+    if (!mirrorBegun) { mirror.begin(); mirrorBegun = true; }
+    memcpy(mirror.getPixels(), getPixels(), numPixels() * (wOffset == rOffset ? 3 : 4));
+    Adafruit_NeoPixel::show();
+    mirror.show();
+  }
+};
+DualStrip strip(NUM_LEDS, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
+
+
 // Same I2C clock during and after each transfer (the library default drops to 100 kHz after)
 Adafruit_SSD1306  oled(OLED_WIDTH, OLED_HEIGHT, &Wire, -1, OLED_I2C_HZ, OLED_I2C_HZ);
 WebServer   server(80);

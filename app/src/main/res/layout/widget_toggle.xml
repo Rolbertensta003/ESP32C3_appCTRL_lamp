@@ -28,6 +28,20 @@
             android:layout_gravity="center"
             android:src="@drawable/ic_w_power_on"
             android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/t_batt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+            android:background="@drawable/widget_badge"
+            android:text="@string/w_preview_batt"
+            android:textColor="@color/w_ink"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
     </FrameLayout>
 
     <TextView

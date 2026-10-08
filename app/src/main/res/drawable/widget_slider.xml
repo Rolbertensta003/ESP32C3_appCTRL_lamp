@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brightness bar: soft track, amber fill set by the image level (0 to 10000). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/w_soft"/>
+            <corners android:radius="12dp"/>
+        </shape>
+    </item>
+    <item>
+        <clip android:clipOrientation="horizontal" android:gravity="left">
+            <shape android:shape="rectangle">
+                <solid android:color="@color/w_fill"/>
+                <corners android:radius="12dp"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

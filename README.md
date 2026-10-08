@@ -1,4 +1,4 @@
-# Light strip, Android app (v0.1)
+# Light strip, Android app (v0.3)
 
 Controls the ESP32-C3 light strip lamp over your home WiFi. Designed by Ro-Han G.
 
@@ -23,8 +23,8 @@ own web page uses.
 1. Create a new GitHub repository and upload everything in this folder, including the hidden
    `.github` folder.
 2. Open the **Actions** tab. The "Build APK" workflow runs on every push (or press **Run workflow**).
-3. When it finishes (about 3 to 5 minutes), open the run and download **LightStrip-v0.1-apk**.
-   Unzip it to get `LightStrip-v0.1.apk`.
+3. When it finishes (about 3 to 5 minutes), open the run and download **LightStrip-v0.3-apk**.
+   Unzip it to get `LightStrip-v0.3.apk`.
 
 ### Option B: Android Studio
 1. File > Open, and pick this folder. Let Gradle sync finish.

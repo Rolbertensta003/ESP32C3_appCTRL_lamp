@@ -23,9 +23,9 @@ jobs:
           ./gradlew --no-daemon assembleRelease
 
       - name: Rename
-        run: cp app/build/outputs/apk/release/app-release.apk LightStrip-v0.1.apk
+        run: cp app/build/outputs/apk/release/app-release.apk LightStrip-v0.3.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: LightStrip-v0.1-apk
-          path: LightStrip-v0.1.apk
+          name: LightStrip-v0.3-apk
+          path: LightStrip-v0.3.apk

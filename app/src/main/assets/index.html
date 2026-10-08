@@ -174,6 +174,20 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
 @keyframes rise{from{transform:translateY(16px);opacity:0}}
 .toast{position:fixed;left:50%;bottom:90px;z-index:60;transform:translate(-50%,10px);opacity:0;background:var(--ink);color:var(--surface);padding:11px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);transition:opacity .2s,transform .2s;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+/* battery (firmware v0.3) */
+.pill.batt{cursor:pointer;gap:6px;color:var(--ink);font-variant-numeric:tabular-nums}
+.pill.batt svg{width:22px;height:12px;flex:none}
+.pill.batt.low{color:var(--bad);border-color:var(--bad)}
+.pill.batt.stale{opacity:.55}
+.bmeter{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:14px 0 2px}
+.bmeter span{display:block;height:100%;background:var(--ok);border-radius:4px}
+.bmeter.low span{background:var(--bad)}
+
+/* widgets and background */
+.item .switch{background:var(--line-strong)}
+.item .switch[aria-checked="true"]{background:var(--accent)}
+.item select.input{width:auto;min-height:40px;padding-top:6px;padding-bottom:6px}
+.item .grow b .sub{font-weight:400;font-size:12.5px;margin-left:4px}
 @media (min-width:640px){.modes{grid-template-columns:repeat(7,1fr)}.swatches{grid-template-columns:repeat(12,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -182,6 +196,7 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
 
 <header class="top">
  <button class="who" id="who" aria-label="Choose lamp"><b id="whoName">Light strip</b><small id="whoAddr">No lamp added</small></button>
+ <button class="pill batt" id="batt" hidden aria-label="Battery"><svg viewBox="0 0 26 14" aria-hidden="true"><rect x="1" y="1" width="21" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="23" y="4.5" width="2" height="5" rx="1" fill="currentColor"/><rect id="battFill" x="3.5" y="3.5" width="0" height="7" rx="1.5" fill="currentColor"/></svg><span id="battT">–</span></button>
  <div class="pill" id="pill" role="status"><i></i><span id="pillT">No lamp</span></div>
 </header>
 
@@ -191,6 +206,9 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
   <div class="banner" id="offline" hidden>
    <div><b>Can't reach the lamp</b><span id="offlineT">Check that your phone is on the same WiFi as the lamp.</span></div>
    <button class="btn small" id="retry">Retry</button>
+  </div>
+  <div class="banner" id="lowBatt" hidden>
+   <div><b>Battery low</b><span id="lowBattT"></span></div>
   </div>
 
   <section class="hero" id="hero" aria-live="polite">
@@ -404,12 +422,36 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
    </div>
   </section>
 
+  <section class="card" id="bgCard" hidden>
+   <div class="head"><div><h2>Widgets and background</h2><p class="sub">Keep your home screen widgets up to date and get a warning when a lamp's battery runs low.</p></div></div>
+   <div class="list">
+    <div class="item"><div class="grow"><b>Run in background</b><small id="bgOptT"></small></div>
+     <span class="tag ok" id="bgOptOk" hidden>Allowed</span><button class="btn small" id="bgOpt">Allow</button></div>
+    <div class="item"><div class="grow"><b>Notifications</b><small id="bgNotifT"></small></div>
+     <span class="tag ok" id="bgNotifOk" hidden>Allowed</span><button class="btn small" id="bgNotif">Allow</button></div>
+    <div class="item"><div class="grow"><b>Live widget updates</b><small>Refreshes widgets while the screen is on and pauses when it's off. Shows a silent notification.</small></div>
+     <button class="switch" id="bgLive" role="switch" aria-checked="false" aria-label="Live widget updates"></button></div>
+    <div class="item"><div class="grow"><b>Update every</b><small>Shorter keeps widgets closer to the lamp.</small></div>
+     <select class="input" id="bgEvery" aria-label="Update every"><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="300">5 minutes</option></select></div>
+    <div class="item"><div class="grow"><b>Low battery alert</b><small>Notifies you when a lamp drops to 20%.</small></div>
+     <button class="switch" id="bgAlert" role="switch" aria-checked="true" aria-label="Low battery alert"></button></div>
+   </div>
+   <p class="hint" style="margin-top:12px">Some phones (Xiaomi, Oppo, Vivo, Huawei, OnePlus) also need Autostart or "Allow background activity" turned on in the app's settings.</p>
+   <div class="row" style="margin-top:10px"><button class="btn small" id="bgApp">Open app settings</button></div>
+  </section>
+
+  <section class="card" id="wgCard" hidden>
+   <div class="head"><div><h2>Home screen widgets</h2><p class="sub" id="wgHow">Touch and hold your home screen, tap Widgets, then find Light strip.</p></div></div>
+   <div class="list" id="wgList"></div>
+  </section>
+
   <section class="card">
    <div class="head"><h2>About</h2></div>
    <dl class="kv">
     <dt>App</dt><dd>Light strip</dd>
-    <dt>Version</dt><dd>0.1</dd>
+    <dt>Version</dt><dd>0.3</dd>
     <dt>Lamp firmware</dt><dd id="aFw">–</dd>
+    <dt>Lamp battery</dt><dd id="aBatt">–</dd>
     <dt>Designed by</dt><dd>Ro-Han G.</dd>
    </dl>
   </section>
@@ -425,7 +467,7 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
   </section>
  </section>
 
- <p class="credit">Light strip, version 0.1. Designed by Ro-Han G.</p>
+ <p class="credit">Light strip, version 0.3. Designed by Ro-Han G.</p>
 </main>
 
 <nav class="nav" aria-label="Sections">
@@ -439,6 +481,7 @@ select.input{appearance:none;-webkit-appearance:none;background-image:linear-gra
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="scrim" id="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle">
  <h3 id="sTitle"></h3><p id="sText"></p>
+ <div class="bmeter" id="sMeter" hidden><span></span></div>
  <div class="row"><button class="btn" id="sNo">Cancel</button><button class="btn primary" id="sYes">OK</button></div>
 </div></div>
 
@@ -531,7 +574,7 @@ function showTab(t){
  qsa('.nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===t?'page':'false'));
  window.scrollTo(0,0);
  if(t==='wifi'&&lamp())loadWifi();
- if(t==='lamps')checkAll();
+ if(t==='lamps'){checkAll();renderBg()}
  if(t==='note'){drawOled();drawImg()}
 }
 qsa('.nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
@@ -548,6 +591,13 @@ function ask(title,text,ok,danger){
  return new Promise(r=>sheetRes=r);
 }
 function closeSheet(v){$('scrim').hidden=true;if(sheetRes){const r=sheetRes;sheetRes=null;r(v)}}
+/* information only: one OK button, optional meter (0-100) */
+function info(title,text,meter,low){
+ const m=$('sMeter');m.hidden=meter==null;m.className='bmeter'+(low?' low':'');
+ if(meter!=null)qs('span',m).style.width=clamp(meter,0,100)+'%';
+ $('sNo').hidden=true;
+ return ask(title,text,'OK').then(v=>{$('sNo').hidden=false;m.hidden=true;return v});
+}
 $('sYes').onclick=()=>closeSheet(true);$('sNo').onclick=()=>closeSheet(false);
 $('scrim').onclick=e=>{if(e.target===$('scrim'))closeSheet(false)};
 
@@ -557,6 +607,7 @@ function setOnline(v){
  $('pillT').textContent=!l?'No lamp':v===true?'Online':v===false?'Not responding':'Connecting';
  $('offline').hidden=v!==false;
  if(l)$('offlineT').textContent=' Nothing answered at '+l.addr+'. Check that your phone is on the same WiFi as the lamp.';
+ $('batt').classList.toggle('stale',v===false);   // last known level while the lamp doesn't answer
 }
 function renderWho(){
  const l=lamp();
@@ -598,7 +649,41 @@ function applyState(j){
  const l=lamp();
  if(l&&j.ver&&l.fw!==j.ver){l.fw=j.ver;saveLamps()}
  lampStatus[activeId]='ok';
+ lampBatt[activeId]=battOf(j);
  renderAll();
+ renderBatt();pushWidget(activeId,j);
+ if(!bgOffered){bgOffered=true;setTimeout(offerBackground,1500)}
+}
+
+/* ================= battery (firmware v0.3: bok, bv, bp) ================= */
+const BATT_LOW=20;          // the lamp shows "Low" on its display at or below this
+const lampBatt={};          // id -> {ok,p,v}, or null for firmware without a battery reading
+const battOf=j=>j&&j.bok!==undefined?{ok:!!j.bok,p:clamp(Math.round(+j.bp||0),0,100),v:+j.bv||0}:null;
+function renderBatt(){
+ const b=S?battOf(S):null,el=$('batt'),has=!!(b&&b.ok),low=has&&b.p<=BATT_LOW;
+ el.hidden=!has;$('lowBatt').hidden=!low;
+ $('aBatt').textContent=!S?'–':!b?'Not reported (update the lamp to v0.3)':!b.ok?'No battery detected':b.p+'%, '+b.v.toFixed(2)+' V';
+ if(!has)return;
+ el.classList.toggle('low',low);
+ $('battT').textContent=b.p+'%';
+ $('battFill').setAttribute('width',(16*b.p/100).toFixed(1));
+ el.setAttribute('aria-label','Battery '+b.p+' percent'+(low?', low':'')+'. Show details');
+ $('lowBattT').textContent=' '+b.p+'% left ('+b.v.toFixed(2)+' V). Charge the lamp soon.';
+}
+$('batt').onclick=()=>{
+ const b=S&&battOf(S),l=lamp();if(!b||!b.ok||!l)return;
+ const low=b.p<=BATT_LOW;
+ info(l.name+' battery: '+b.p+'%',b.v.toFixed(2)+' V measured by the lamp. '+
+  (low?'Low. Charge the lamp soon.':b.p>=95?'Fully charged.':'Shows Low on the lamp at '+BATT_LOW+'% or less.'),b.p,low);
+};
+
+/* Widgets copy what the app reads, so they match the app while it is open. */
+const pushed={};
+function pushWidget(id,j){
+ if(!window.Native||!Native.widgetState||!id||!j)return;
+ const k=JSON.stringify(Object.assign({},j,{rssi:0,bv:0}));   // ignore values that wobble every read
+ if(pushed[id]===k)return;pushed[id]=k;
+ try{Native.widgetState(id,JSON.stringify(j))}catch(e){}
 }
 
 /* ================= LIGHT tab ================= */
@@ -958,7 +1043,8 @@ function renderLamps(){
   const st=lampStatus[l.id],act=l.id===activeId;
   const r=document.createElement('div');r.className='item';
   r.innerHTML='<div class="lampicon"><svg viewBox="0 0 24 24"><path d="M12 2v5" stroke="#888" stroke-width="1.4"/><path d="M5 15a7 7 0 0 1 14 0z" fill="#F4F2ED"/><path d="M9.5 15a2.5 2.5 0 0 0 5 0z" fill="'+(st==='ok'?'#FFC36B':'#666')+'"/></svg></div>'+
-   '<div class="grow"><b>'+esc(l.name)+'</b><small class="num">'+esc(l.addr)+(st==='ok'?', online':st==='bad'?', not responding':st==='checking'?', checking…':'')+'</small></div>'+
+   '<div class="grow"><b>'+esc(l.name)+'</b><small class="num">'+esc(l.addr)+(st==='ok'?', online':st==='bad'?', not responding':st==='checking'?', checking…':'')+
+   (lampBatt[l.id]&&lampBatt[l.id].ok?', battery '+lampBatt[l.id].p+'%'+(lampBatt[l.id].p<=BATT_LOW?' (low)':''):'')+'</small></div>'+
    (act?'<span class="tag">In use</span>':'<button class="btn small" data-a="use">Use</button>')+
    '<button class="icon-btn" data-a="edit" aria-label="Edit '+esc(l.name)+'"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
    '<button class="icon-btn" data-a="del" aria-label="Remove '+esc(l.name)+'"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>';
@@ -974,7 +1060,7 @@ function renderLamps(){
 function useLamp(id,go){activeId=id;S=null;saveLamps();setOnline(null);renderShell();load();if(go){showTab('light');toast('Now controlling '+lamp().name)}}
 function checkAll(){
  lamps.forEach(l=>{lampStatus[l.id]='checking';
-  api('GET','/api/state',null,l.addr,3000).then(()=>lampStatus[l.id]='ok').catch(()=>lampStatus[l.id]='bad').finally(renderLamps)});
+  api('GET','/api/state',null,l.addr,3000).then(j=>{lampStatus[l.id]='ok';lampBatt[l.id]=battOf(j);pushWidget(l.id,j)}).catch(()=>lampStatus[l.id]='bad').finally(renderLamps)});
  renderLamps();
 }
 $('lRecheck').onclick=checkAll;
@@ -1011,9 +1097,72 @@ $('lForce').onclick=()=>{if(forceAddr)commitLamp(forceAddr,null)};
 $('lAddr').onkeydown=e=>{if(e.key==='Enter')$('lName').focus()};
 $('lName').onkeydown=e=>{if(e.key==='Enter')$('lSave').click()};
 
+/* ================= WIDGETS and background (v0.3) ================= */
+const WIDGETS=[
+ ['controls','Lamp controls','4 × 2','Power, brightness, four modes, sleep and battery'],
+ ['switch','Lamp switch','1 × 1','One tap on or off, with a battery badge'],
+ ['battery','Lamp battery','2 × 1','Battery level and voltage'],
+ ['brightness','Lamp brightness','4 × 1','Power and a bar you tap to set brightness'],
+ ['colours','Lamp colours','4 × 1','Eight colour presets and Rainbow'],
+ ['modes','Lamp modes','4 × 1','Every light mode, including Blink and Music'],
+ ['timer','Sleep timer','2 × 2','Off after 15 min to 2 hours, with a live countdown'],
+ ['all','All lamps','4 × 2','Every lamp with power and battery, plus All off']];
+const hasBg=!!(window.Native&&Native.bgStatus);
+let BG={},bgOffered=false;
+function readBg(){if(!hasBg)return;try{BG=JSON.parse(Native.bgStatus()||'{}')}catch(e){BG={}}}
+function renderBg(){
+ $('bgCard').hidden=$('wgCard').hidden=!hasBg;if(!hasBg)return;
+ readBg();
+ $('bgOptT').textContent=BG.unrestricted?"Android won't pause widget updates.":'Android may pause widget updates to save battery.';
+ $('bgOpt').hidden=!!BG.unrestricted;$('bgOptOk').hidden=!BG.unrestricted;
+ $('bgNotifT').textContent=BG.notif?'For live updates and low battery alerts.':'Needed for live updates and low battery alerts.';
+ $('bgNotif').hidden=!!BG.notif;$('bgNotifOk').hidden=!BG.notif;
+ $('bgLive').setAttribute('aria-checked',!!BG.live);
+ $('bgEvery').value=String(BG.every||30);$('bgEvery').disabled=!BG.live;
+ $('bgAlert').setAttribute('aria-checked',BG.alerts!==false);
+ $('wgHow').textContent=BG.canPin?'Tap Add to place one, or touch and hold your home screen, tap Widgets, then find Light strip.':
+  'Touch and hold your home screen, tap Widgets, then find Light strip.';
+ const el=$('wgList');el.innerHTML='';
+ WIDGETS.forEach(([k,n,size,d])=>{
+  const c=(BG.widgets||{})[k]||0,r=document.createElement('div');r.className='item';
+  r.innerHTML='<div class="grow"><b>'+n+'<span class="sub">'+size+'</span></b><small>'+d+'</small></div>'+
+   (c?'<span class="tag ok">'+(c>1?c+' added':'Added')+'</span>':'')+(BG.canPin?'<button class="btn small">Add</button>':'');
+  const b=qs('button',r);
+  if(b)b.onclick=()=>{if(!Native.addWidget(k))toast('Touch and hold your home screen, tap Widgets, then find Light strip.')};
+  el.appendChild(r);
+ });
+}
+window.bgChanged=renderBg;
+if(hasBg){
+ $('bgOpt').onclick=()=>Native.allowBackground();
+ $('bgNotif').onclick=()=>Native.allowNotifications();
+ $('bgApp').onclick=()=>Native.openAppSettings();
+ $('bgLive').onclick=()=>{const on=$('bgLive').getAttribute('aria-checked')!=='true';
+  $('bgLive').setAttribute('aria-checked',on);Native.setLive(on);
+  if(on&&!BG.notif)Native.allowNotifications();
+  toast(on?'Widgets now update while the screen is on':'Live updates off. Widgets refresh when you tap them.')};
+ $('bgEvery').onchange=()=>{Native.setEvery(+$('bgEvery').value);toast('Widgets update every '+$('bgEvery').selectedOptions[0].text)};
+ $('bgAlert').onclick=()=>{const on=$('bgAlert').getAttribute('aria-checked')!=='true';
+  $('bgAlert').setAttribute('aria-checked',on);Native.setAlerts(on)};
+}
+/* Asked once, after the first lamp answers: live widgets need notifications and background use. */
+async function offerBackground(){
+ if(!hasBg||!lamp()||!$('scrim').hidden)return;
+ readBg();if(BG.asked||BG.live)return;
+ Native.markAsked();
+ if(await ask('Keep your widgets up to date?',"Light strip can refresh your home screen widgets in the background and warn you when a lamp's battery is low. Android will ask you to allow notifications and to let the app run in the background.",'Allow'))
+  Native.setupBackground();
+ else toast('You can turn this on later under Lamps, Widgets and background.');
+}
+/* All lamps widget: tapping a lamp opens it here */
+window.openLamp=id=>{
+ if(!lamps.find(l=>l.id===id))return;
+ if(id!==activeId)useLamp(id,true);else showTab('light');
+};
+
 /* ================= render ================= */
 function renderShell(){
- renderWho();renderLamps();
+ renderWho();renderLamps();renderBatt();
  if(!lamp()){setOnline(null);if(tab!=='lamps')showTab(tab)}
  else if(!$('tab-empty').hidden)showTab(tab);
  if(!lamps.length)$('addTitle').textContent='Add a lamp';
@@ -1029,7 +1178,7 @@ window.appBack=()=>{
 };
 
 /* ================= start ================= */
-resetForm();renderShell();
+resetForm();renderShell();renderBg();
 if(lamp()){setOnline(null);showTab('light');load()}else showTab('lamps');
 </script>
 </body>

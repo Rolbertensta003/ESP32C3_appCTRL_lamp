@@ -15,4 +15,34 @@
     <string name="w_dimmer">Dimmer</string>
     <string name="w_brighter">Brighter</string>
     <string name="w_open_app">Open Light strip</string>
+
+    <!-- v0.3 widgets -->
+    <string name="w_label_battery">Lamp battery</string>
+    <string name="w_label_brightness">Lamp brightness</string>
+    <string name="w_label_colours">Lamp colours</string>
+    <string name="w_label_modes">Lamp modes</string>
+    <string name="w_label_timer">Sleep timer</string>
+    <string name="w_label_all">All lamps</string>
+    <string name="w_desc_battery">Battery level and voltage of your lamp</string>
+    <string name="w_desc_brightness">Power and a brightness bar you tap to set</string>
+    <string name="w_desc_colours">Colour presets and Rainbow, one tap each</string>
+    <string name="w_desc_modes">Every light mode, including White, Blink and Music</string>
+    <string name="w_desc_timer">Turn the light off after 15 minutes to 2 hours, with a live countdown</string>
+    <string name="w_desc_all">Every lamp with power, mode and battery, plus All off</string>
+    <string name="w_preview_batt">82%</string>
+    <string name="w_preview_batt_sub">Light strip · 3.92 V</string>
+    <string name="w_preview_bri">Light strip  70%</string>
+    <string name="w_white">White</string>
+    <string name="w_blink">Blink</string>
+    <string name="w_music">Music</string>
+    <string name="w_sleep_timer">Sleep timer</string>
+    <string name="w_timer_idle">Not set</string>
+    <string name="w_timer_hint">Turn off after</string>
+    <string name="w_timer_cancel">Cancel timer</string>
+    <string name="w_t15">15m</string>
+    <string name="w_t30">30m</string>
+    <string name="w_t60">1h</string>
+    <string name="w_t120">2h</string>
+    <string name="w_all_off">All off</string>
+    <string name="w_all_empty">No lamps yet. Open the app to add one.</string>
 </resources>

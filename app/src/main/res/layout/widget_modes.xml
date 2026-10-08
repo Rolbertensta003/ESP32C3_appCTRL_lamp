@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 4x1 Modes widget: every light mode, one tap each. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/md_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="@drawable/widget_bg">
+    <LinearLayout android:id="@+id/md_0" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d0" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_colour" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_1" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d1" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_warm" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_2" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d2" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_cold" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_3" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d3" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_white" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_4" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d4" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_rainbow" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_5" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:layout_marginEnd="4dp" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d5" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_blink" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/md_6" android:layout_width="0dp" android:layout_height="match_parent"
+        android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+        android:background="@drawable/widget_chip">
+        <ImageView android:id="@+id/md_d6" android:layout_width="16dp" android:layout_height="16dp"
+            android:padding="1dp" android:background="@drawable/widget_glow_ring" android:src="@drawable/widget_glow"
+            android:contentDescription="@null" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+            android:gravity="center" android:text="@string/w_music" android:textColor="@color/w_ink"
+            android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>
